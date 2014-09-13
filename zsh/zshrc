@@ -1,15 +1,31 @@
 ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="clean"
+ZSH_THEME="pmcgee"
 
-isnumber() { [ ! -z $1 ] && [ -z "$(echo $1 | grep -Ewv '([0-9]){1,}' )" ] && echo "TRUE" || echo "FALSE" ; }
- 
+alias rm='srm -m -v -f $@'
+alias pidof='/usr/local/Cellar/pidof/0.1.4/bin/pidof $@'
+alias getip='dig +short myip.opendns.com @resolver1.opendns.com'
+alias getip2='curl http://ifconfig.me/ip'
+alias btcnow="python -c 'import requests; r = requests.get(\"https://blockchain.info/tobtc?currency=USD&value=100\"); print \"right now it will cost you 100 USD to buy %s Bitcoin!\" % r.content.strip()'"
+alias netmon="clear; while x=0; do clear; date; echo \"\"; echo \"Active Network Connections\"; echo \"----------------------\"; lsof -nPi| grep '\->' |awk '{print $9}'; sleep 30; done"
+alias urlenc='python -c "import sys, urllib as u; print u.quote_plus(sys.argv[1])"'
+alias urldec='python -c "import sys, urllib as u; print u.unquote_plus(sys.argv[1])"'
+alias vncview='open vnc://$@'
+alias j="jobs"
+alias h="history"
+alias zshrc="vim ~/.zshrc"
+alias strings="strings -t x"
+alias python="/usr/local/bin/python2.7"
+alias ohmyzsh="vim ~/.oh-my-zsh"
+
 dec2hex() { printf "%x\n" "$1"; }
-hex2dec() { echo $((0x${1#0x})); }
 dec2bin() { echo "obase=2;$1" | bc; }
+dec2asc() { echo -e $(printf "\\\x%x" $1); }
+hex2dec() { echo $((0x${1#0x})); }
 bin2dec() { echo $((2#$1)); }
 b64d() { echo $1 | base64 -d; }
 asmgrep() { objdump -d "$2" | grep --color -C 4 -E "$1"; }
- 
+asc2dec() { printf "%d\n" "'$1"; }
+
 hex2bin()
 {
     local bin
@@ -19,38 +35,42 @@ hex2bin()
     done
     echo
 }
- 
-dumpmem()
+
+sc2asm()
 {
-    local stack_addr=$(grep -m 1 "$1" /proc/$2/maps |
-     cut -d' ' -f1 | sed 's/^/0x/; s/-/ 0x/')
- 
-    test -n "$stack_addr" && \
-    echo "dump memory "$3" $stack_addr" | gdb --pid $2 &> /dev/null
+    local mode=32
+    local in="$1"
+    [ $1 = '-m' ] && mode=$2 in="$3"
+    sc=$(echo "$in" | sed 's/\\x/ /g')
+    echo "$sc" | udcli -$mode -x -noff -nohex | sed 's/^ //'
 }
- 
-ip2bin()
+
+asm2sc()
 {
-    local r
-    r=$(echo $1 | tr . \;)
- 
-    (for i in $(echo "obase=2;$r" | bc); do printf '%.8d.' $i; done) | sed 's/.$//'
+    local obj=$(mktemp)
+    local fmt=elf32
+    local in="$1"
+    [ $1 = "-f" ] && fmt=$2 in="$3"
+    nasm -f $fmt -o $obj $in
+    objdump -M intel -D $obj |
+     tr -d \\t |
+     sed -nr 's/^.*:(([0-9a-f]{2} )*).*$/\1/p' |
+     tr -d \\n |
+     sed 's/\(..\) /\\x\1/g'
     echo
+    rm -f $obj
 }
- 
+
+
 geoip()
 {
     wget -q --timeout=30 "http://xml.utrace.de/?query=$1" -O - | sed '4d' | sed "s/<[^>]*>//g; s/\t//g; /^$/d" | tr '\n' ',' ; echo "\n"
- 
 }
- 
-dec2asc() { echo -e $(printf "\\\x%x" $1); }
-asc2dec() { printf "%d\n" "'$1"; }
- 
+
 asciitable()
 {
     echo -en \
-    "Dec Hex    Dec Hex    Dec Hex  Dec Hex  Dec Hex  Dec Hex   Dec Hex   Dec Hex\n\                           
+    "Dec Hex    Dec Hex    Dec Hex  Dec Hex  Dec Hex  Dec Hex   Dec Hex   Dec Hex\n\
     0 00 NUL  16 10 DLE  32 20    48 30 0  64 40 @  80 50 P   96 60 \`  112 70 p\n\
     1 01 SOH  17 11 DC1  33 21 !  49 31 1  65 41 A  81 51 Q   97 61 a  113 71 q\n\
     2 02 STX  18 12 DC2  34 22 \"  50 32 2  66 42 B  82 52 R   98 62 b  114 72 r\n\
@@ -69,41 +89,10 @@ asciitable()
    15 0F SI   31 1F US   47 2F /  63 3F ?  79 4F O  95 5F _  111 6F o  127 7F DEL\n"
 }
 
-sc2asm()
-{
-    local mode=32
-    local in="$1"
- 
-    [ $1 = '-m' ] && mode=$2 in="$3"
- 
-    sc=$(echo "$in" | sed 's/\\x/ /g')
-    echo "$sc" | udcli -$mode -x -noff -nohex | sed 's/^ //'
-}
- 
-asm2sc()
-{
-    local obj=$(mktemp)
-    local fmt=elf32
-    local in="$1"
- 
-    [ $1 = "-f" ] && fmt=$2 in="$3"
- 
-    nasm -f $fmt -o $obj $in 
- 
-    objdump -M intel -D $obj |
-     tr -d \\t |
-     sed -nr 's/^.*:(([0-9a-f]{2} )*).*$/\1/p' | 
-     tr -d \\n |
-     sed 's/\(..\) /\\x\1/g'
- 
-    echo
-    rm -f $obj                                                                                   
-}
- 
-                                                                           
+
 COMPLETION_WAITING_DOTS="true"
-plugins=(git zsh-syntax-highlighting)
-
+plugins=(sublime battery pip python urltools:q encode64 brew git zsh-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
-
-export PATH=/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
+PATH="/opt/local/bin:/opt/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/git/bin:/usr/local/MacGPG2/bin:/Users/db/.rvm/bin"
+export PATH=/usr/local/bin:$PATH
+export PATH="$PATH:$HOME/.rvm/bin"
