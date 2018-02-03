@@ -1,0 +1,220 @@
+set nocompatible
+filetype off
+
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'scrooloose/nerdtree'
+Plugin 'motemen/git-vim'
+Plugin 'python-mode/python-mode'
+Plugin 'matchit.zip'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'vim-airline/vim-airline'
+Plugin 'tpope/vim-fugitive'
+Plugin 'plasticboy/vim-markdown'
+Plugin 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plugin 'vim-airline/vim-airline-themes'
+Plugin 'indenthtml.vim'
+Plugin 'haya14busa/incsearch.vim'
+Plugin 'haya14busa/incsearch-fuzzy.vim'
+
+" Help within Vim
+" :PluginList - list configured plugins
+" :PluginInstall installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+call vundle#end() " all Plugins must be between the begin() and end() Vundle call block
+
+filetype plugin indent on
+
+if has("syntax")
+  syntax on
+endif
+
+if has("autocmd")
+    au BufReadPost * if line("'\"") > 1 && line ("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
+
+filetype off
+filetype plugin indent on
+set background=dark
+set t_Co=256
+colorscheme colorsbox-material
+
+"let g:base16_shell_path="/Users/adam/.config/base16-builder/output/shell"
+
+"if filereadable(expand("~/.vimrc_background"))
+"  let base16colorspace=256
+"  source ~/.vimrc_background
+"endif
+
+
+autocmd FileType python set tabstop=4|set shiftwidth=4|set expandtab|set softtabstop=4|set textwidth=79
+autocmd FileType ruby set tabstop=2|set shiftwidth=2|set expandtab|set softtabstop=2|set textwidth=79
+autocmd FileType html setlocal shiftwidth=4 tabstop=4 softtabstop=4
+autocmd FileType javascript setlocal shiftwidth=4 tabstop=4 softtabstop=4
+autocmd FileType * set tabstop=2|set shiftwidth=2|set expandtab|set softtabstop=2|set textwidth=120
+autocmd FileType make setlocal noexpandtab
+
+set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class,elsif,rescue,begin
+let python_highlight_all = 1
+
+set smartcase
+set ignorecase
+set showmatch
+set smartindent
+set number
+set ls=2
+set report=0
+set ruler
+set laststatus=2
+set linebreak               " don't wrap textin the middle of a word
+set autoindent              " always set autoindenting on
+set mouse=a
+set modelines=0     " CVE-2007-2438
+set nocompatible    " Use Vim defaults instead of 100% vi compatibility
+set backspace=2     " more powerful backspacing
+
+" remove trailing whitespace for certain filetypes
+autocmd FileType c,cpp,java,php,js,python,twig,xml,yml autocmd BufWritePre <buffer> :call setline(1,map(getline(1,"$"),'substitute(v:val,"\\s\\+$","","")'))
+
+" Set directories for backups, swaps, and undos storage
+set directory=~/.vim/dirs/tmp
+set undofile
+set undolevels=1000
+set undoreload=10000
+set undodir=~/.vim/dirs/undos
+set viminfo+=n~/.vim/dirs/viminfo
+
+" -----------------------------------
+"  Customizations and Plugin Section
+" -----------------------------------
+"
+" ***
+" NERDTree Mappings
+" ***
+map <F3> :NERDTreeToggle<CR>
+map ,t :NERDTreeFind<CR>
+let g:NERDTreeIgnore = ['\.pyc$', '\.pyo$']
+let g:NERDTreeChDirMode = 1
+let g:NERDTreeMinimalUI = 1
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+autocmd FileType nerdtree setlocal nocursorline
+
+
+" ***
+" incsearch plugin settings
+" ***
+map f/  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+
+function! s:config_easyfuzzymotion(...) abort
+  return extend(copy({
+    \   'converters': [incsearch#config#fuzzy#converter()],
+    \   'modules': [incsearch#config#easymotion#module()],
+    \   'keymap': {"\<CR>": '<Over>(easymotion)'},
+    \   'is_expr': 0,
+    \   'is_stay': 1
+    \ }), get(a:, 1, {}))
+endfunction
+
+noremap <silent><expr> z/ incsearch#go(<SID>config_easyfuzzymotion())
+
+
+" ***
+" Python-Mode mappings
+" ***
+" enable the plugin
+let g:pymode = 1
+" specify python version 2.x
+let g:pymode_python = 'python2.7'
+
+" ignore pymode warnings
+let g:pymode_warnings = 1
+
+" setup for pymode quickfix window
+let g:pymode_quickfix_minheight = 3
+let g:pymode_quickfix_maxheight = 6
+
+" trim whitespace on save
+let g:pymode_trim_whitespaces = 1
+
+" PEP8 python indentation
+let g:pymode_indent = 1
+
+" expand line length max to 120 and draw colored line there
+let g:pymode_options_max_line_length = 120
+let g:pymode_options_colorcolumn = 1
+
+" set keybindings to run rope options
+let g:pymode_rope_goto_definition_bind = "<Ctrl-]>"
+let g:pymode_rope_run_bind = "<C-S-e>"
+let g:pymode_rope_doc_bind = "<C-S-d>"
+let g:pymode_rope_goto_definition_cmd = "e"
+
+" start of linter options
+let g:pymode_lint_on_write = 0
+let g:pymode_lint_signs = 0
+
+" syntax highlighting option extras
+let g:pymode_syntax_all = 1
+let g:pymode_syntax_print_as_function = 1
+let g:pymode_syntax_highlight_equal_operator = g:pymode_syntax_all
+let g:pymode_syntax_highlight_stars_operator = g:pymode_syntax_all
+let g:pymode_syntax_highlight_self = g:pymode_syntax_all
+" highlight indentation errors
+let g:pymode_syntax_indent_errors = g:pymode_syntax_all
+" highlight objects, builtin types and exceptions
+let g:pymode_syntax_builtin_objs = g:pymode_syntax_all
+let g:pymode_syntax_builtin_types = g:pymode_syntax_all
+let g:pymode_syntax_highlight_docstrings = g:pymode_syntax_all
+let g:pymode_syntax_docstrings = g:pymode_syntax_all
+
+" allow code folding for classes and functions
+let g:pymode_folding = 0
+
+" turn on documentation script
+let g:pymode_doc = 1
+" :PymodeDoc - show documentation
+" show docs for current word selection with this shortcut
+let g:pymode_doc_bind = 'K'
+
+" Turn on code checking
+let g:pymode_lint = 1
+let g:pymode_lint_checkers = ['pyflakes', 'pep8']
+let g:pymode_lint_ignore = "D103,E501,D102,D101,E303,D100,E128,E201,E221,E202"
+let g:pymode_lint_cwindow = 1
+
+" :PymodeLint (check current code), :PymodeLintToggle (toggle code checking)
+let g:pymode_lint_options_pep8 = {'max_line_length': g:pymode_options_max_line_length}
+let g:pymode_lint_options_pyflakes = {'builtins': '_'}
+nmap ,D :tab split<CR>:PymodePython rope.goto()<CR>
+nmap ,o :RopeFindOccurrences<CR>
+
+
+" ***
+" Airline settings
+" ***
+let g:airline_powerline_fonts = 1
+let g:airline_theme = 'powerlineish'
+let g:airline#extensions#whitespace#enabled = 1
+let g:airline_detect_modified = 1
+
+" show current working directory name
+let g:airline_section_b = '%{substitute(getcwd(), ".*\/", "", "g")} '
+
+" just show the filenames
+let g:airline_section_c = '%{expand("%:p:h:t")}/%t'
+let g:airline_section_y = ''
+let g:airline_section_z = '%3p%% %#__accent_bold#%4l%#__restore__#:%3'
+let g:airline_section_z = '%3p%% %{substitute(line("."), "\\v(\\d)((\\d\\d\\d)+\\d@!)@=", "\\1,", "g")}|%{substitute(line("$"), "\\v(\\d)((\\d\\d\\d)+\\d@!)@=", "\\1,", "g")}'
+
+"Default navigation keys
+nmap <silent> <A-Up> :wincmd k<CR>
+nmap <silent> <A-Down> :wincmd j<CR>
+nmap <silent> <A-Left> :wincmd h<CR>
+nmap <silent> <A-Right> :wincmd l<CR>
